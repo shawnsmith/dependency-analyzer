@@ -33,13 +33,13 @@ public class ClassExtractor {
         _packageFilter = packageFilter;
     }
 
+    public Set<ClassName> getClassNames() {
+        return _classNames;
+    }
+
     public ClassExtractor visit(ClassReader reader) {
         reader.accept(_classVisitor, ClassReader.SKIP_FRAMES);
         return this;
-    }
-
-    public Set<ClassName> getClassNames() {
-        return _classNames;
     }
 
     private void addType(Type type) {

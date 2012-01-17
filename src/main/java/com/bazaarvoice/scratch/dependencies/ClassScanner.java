@@ -1,13 +1,16 @@
 package com.bazaarvoice.scratch.dependencies;
 
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -50,26 +53,60 @@ public class ClassScanner {
     }
 
     public void scan(final Module module) {
-        final File classesDir = new File(module.getDirectory(), "target/classes");
-        if (!classesDir.isDirectory()) {
+        if (!new File(module.getDirectory(), "target").isDirectory()) {
             return;
         }
         System.err.println("scanning " + module.getName() + "...");
-        Utils.findClassFiles(classesDir, new Function<byte[], Void>() {
+        Utils.walkDirectory(new File(module.getDirectory(), "target/classes"), new Utils.FileSink() {
             @Override
-            public Void apply(byte[] classBytes) {
-                ClassReader reader = new ClassReader(classBytes);
-                ClassName className = new ClassName(Type.getObjectType(reader.getClassName())).getOuterClassName();
-                synchronized(_locations) {
-                    _locations.add(className, module.getName());
+            public void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
+                String extension = Files.getFileExtension(fileName);
+                if ("class".equals(extension)) {
+                    scanClass(module, inputSupplier);
+                } else if ("xml".equals(extension) && Utils.getFileName(fileName).startsWith("applicationContext")) {
+                    scanSpring(module, fileName, inputSupplier);
                 }
-
-                Set<ClassName> referencedClasses = new ClassExtractor(_packageFilter).visit(reader).getClassNames();
-                synchronized (_dependencies) {
-                    _dependencies.add(className, referencedClasses);
-                }
-                return null;
             }
         });
+        Utils.walkDirectory(new File(module.getDirectory(), "src/main/resources"), new Utils.FileSink() {
+            @Override
+            public void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
+                String extension = Files.getFileExtension(fileName);
+                if ("xml".equals(extension) && Utils.getFileName(fileName).startsWith("applicationContext")) {
+                    scanSpring(module, fileName, inputSupplier);
+                }
+            }
+        });
+        Utils.walkDirectory(new File(module.getDirectory(), "src/main/webapp/WEB-INF"), new Utils.FileSink() {
+            @Override
+            public void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
+                String extension = Files.getFileExtension(fileName);
+                if ("xml".equals(extension) && Utils.getFileName(fileName).startsWith("applicationContext")) {
+                    scanSpring(module, module + ":" + fileName, inputSupplier);
+                }
+            }
+        });
+    }
+
+    private void scanClass(Module module, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
+        byte[] classBytes = ByteStreams.toByteArray(inputSupplier);
+        ClassReader reader = new ClassReader(classBytes);
+        ClassName className = new ClassName(Type.getObjectType(reader.getClassName())).getOuterClassName();
+        addLocation(className, module);
+        addDependencies(className, new ClassExtractor(_packageFilter).visit(reader).getClassNames());
+    }
+
+    private void scanSpring(Module module, String fileName, InputSupplier<? extends InputStream> inputSupplier) {
+        ClassName className = new ClassName(fileName);
+        addLocation(className, module);
+        addDependencies(className, new SpringExtractor(_packageFilter).visit(inputSupplier, fileName).getClassNames());
+    }
+
+    private synchronized void addDependencies(ClassName className, Collection<ClassName> referencedClasses) {
+        _dependencies.add(className, referencedClasses);
+    }
+
+    private synchronized void addLocation(ClassName className, Module module) {
+        _locations.add(className, module.getName());
     }
 }

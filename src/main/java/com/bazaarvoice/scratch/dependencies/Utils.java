@@ -3,13 +3,14 @@ package com.bazaarvoice.scratch.dependencies;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
+import com.google.common.io.InputSupplier;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,9 +41,13 @@ public class Utils {
                 (prefix.isEmpty() || string.length() == prefix.length() || string.charAt(prefix.length()) == fieldSeparator);
     }
 
+    public static String getFileName(String path) {
+        return new File(path).getName();
+    }
+
     public static List<File> findFiles(File root, FileFilter filter) {
         final List<File> files = Lists.newArrayList();
-        findFiles(root, filter, new Function<File, Void>() {
+        walkDirectoryHelper(root, filter, new Function<File, Void>() {
             @Override
             public Void apply(File file) {
                 files.add(file);
@@ -53,47 +58,34 @@ public class Utils {
         return files;
     }
 
-    public static void findFiles(File dir, FileFilter filter, Function<File, Void> sink) {
-        if (!IGNORE_DIRS.contains(dir.getName())) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (!file.isHidden()) {
-                        if (file.isDirectory()) {
-                            findFiles(file, filter, sink);
-                        } else if (filter.accept(file)) {
-                            sink.apply(file);
-                        }
-                    }
-                }
-            }
-        }
+    interface FileSink {
+        void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException;
     }
 
-    public static void findClassFiles(File root, final Function<byte[], Void> sink) {
+    public static void walkDirectory(File root, final FileSink sink) {
         try {
+            final String rootName = root.toString();
             if (root.isDirectory()) {
                 // directory of class files
-                findFiles(root, new SuffixFileFilter(".class"), new Function<File, Void>() {
+                walkDirectoryHelper(root, null, new Function<File, Void>() {
                     @Override
                     public Void apply(File file) {
+                        String name = StringUtils.removeStart(file.toString().substring(rootName.length()), File.separator);
                         try {
-                            sink.apply(Files.toByteArray(file));
+                            sink.accept(name, Files.newInputStreamSupplier(file));
                             return null;
                         } catch (IOException e) {
                             throw Throwables.propagate(e);
                         }
                     }
                 });
-            } else {
+            } else if (root.isFile() && "jar".equals(Files.getFileExtension(root.getName()))) {
                 // jar of class files
                 ZipFile zipFile = new ZipFile(root);
                 try {
                     for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
                         ZipEntry zipEntry = e.nextElement();
-                        if ("class".equals(Files.getFileExtension(zipEntry.getName()))) {
-                            sink.apply(ByteStreams.toByteArray(new ZipInputSupplier(zipFile, zipEntry)));
-                        }
+                        sink.accept(zipEntry.getName(), new ZipInputSupplier(zipFile, zipEntry));
                     }
                 } finally {
                     zipFile.close();
@@ -101,6 +93,23 @@ public class Utils {
             }
         } catch (IOException e) {
             throw Throwables.propagate(e);
+        }
+    }
+
+    private static void walkDirectoryHelper(File dir, FileFilter filter, Function<File, Void> sink) {
+        if (!IGNORE_DIRS.contains(dir.getName())) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (!file.isHidden()) {
+                        if (file.isDirectory()) {
+                            walkDirectoryHelper(file, filter, sink);
+                        } else if (filter == null || filter.accept(file)) {
+                            sink.apply(file);
+                        }
+                    }
+                }
+            }
         }
     }
 }
