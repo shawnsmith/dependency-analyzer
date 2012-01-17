@@ -53,9 +53,6 @@ public class ClassScanner {
     }
 
     public void scan(final Module module) {
-        if (!new File(module.getDirectory(), "target").isDirectory()) {
-            return;
-        }
         System.err.println("scanning " + module.getName() + "...");
         Utils.walkDirectory(new File(module.getDirectory(), "target/classes"), new Utils.FileSink() {
             @Override
