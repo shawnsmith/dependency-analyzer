@@ -14,7 +14,7 @@ import java.util.Map;
 public class Modules {
 
     private final Map<ModuleName, Module> _moduleMap = Maps.newHashMap();
-    private final Map<List<ModuleName>, Boolean> _visibilityCache = Maps.newHashMap();
+    private final Map<List<ModuleName>, Boolean> _dependencyCache = Maps.newHashMap();
 
     public Collection<Module> getAllModules() {
         return Collections.unmodifiableCollection(_moduleMap.values());
@@ -34,31 +34,32 @@ public class Modules {
         }
     }
 
-    public boolean isVisibleTo(ModuleName src, ModuleName dest) {
-        Preconditions.checkNotNull(src);
-        Preconditions.checkNotNull(dest);
-        if (src.equals(dest)) {
+    public boolean isDependentOf(ModuleName descendentName, ModuleName ancestorName) {
+        Preconditions.checkNotNull(descendentName);
+        Preconditions.checkNotNull(ancestorName);
+        if (descendentName.equals(ancestorName)) {
             return true;
         }
-        List<ModuleName> cacheKey = newPair(src, dest);
-        Boolean result = _visibilityCache.get(cacheKey);
+        List<ModuleName> cacheKey = newPair(descendentName, ancestorName);
+        Boolean result = _dependencyCache.get(cacheKey);
         if (result == null) {
             result = false;
-            Module srcModule = _moduleMap.get(src);
-            if (srcModule != null) {
-                for (ModuleName dependencyName : srcModule.getDependencies()) {
-                    if (isVisibleTo(dependencyName, dest)) {
+            Module descendent = _moduleMap.get(descendentName);
+            if (descendent != null) {
+                for (ModuleName dependencyName : descendent.getDependencies()) {
+                    if (isDependentOf(dependencyName, ancestorName)) {
                         result = true;
                         break;
                     }
                 }
             }
-            _visibilityCache.put(cacheKey, result);
+            _dependencyCache.put(cacheKey, result);
         }
         return result;
     }
 
     private <T> List<T> newPair(T a, T b) {
+        //noinspection unchecked
         return Arrays.asList(a, b);
     }
 }

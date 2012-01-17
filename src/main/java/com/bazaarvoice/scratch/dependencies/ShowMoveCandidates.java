@@ -48,6 +48,13 @@ public class ShowMoveCandidates {
         Modules modules = new Modules();
         modules.scan(rootFile, groupPrefix);
 
+        if (modules.getModule(src) == null) {
+            throw new IllegalArgumentException("Unknown source module: " + src);
+        }
+        if (modules.getModule(dest) == null) {
+            throw new IllegalArgumentException("Unknown destination module: " + dest);
+        }
+
         // load the moves file, if one was provided
         ClassLocations moves = (movesFile != null) ? ClassLocations.parseFile(movesFile, groupPrefix) : null;
 
@@ -66,8 +73,8 @@ public class ShowMoveCandidates {
         Set<ClassName> moveBlockers = Sets.newHashSet();
         for (Module module : modules.getAllModules()) {
             if (!src.equals(module.getName()) &&
-                    modules.isVisibleTo(module.getName(), src) &&
-                    !modules.isVisibleTo(module.getName(), dest)) {
+                    modules.isDependentOf(module.getName(), src) &&
+                    !modules.isDependentOf(module.getName(), dest)) {
                 for (ClassName className : locations.getClasses(module.getName())) {
                     moveBlockers.add(className);
                 }
@@ -86,5 +93,6 @@ public class ShowMoveCandidates {
         // write out the moves
         PrintWriter out = new PrintWriter(System.out);
         candidates.writeTo(out, groupPrefix);
+        out.flush();
     }
 }

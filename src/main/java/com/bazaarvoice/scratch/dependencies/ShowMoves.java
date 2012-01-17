@@ -56,5 +56,6 @@ public class ShowMoves {
         // write out the moves
         PrintWriter out = new PrintWriter(System.out);
         effectiveMoves.writeTo(out, groupPrefix);
+        out.flush();
     }
 }

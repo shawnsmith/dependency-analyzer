@@ -13,6 +13,10 @@ public class ClassName implements Comparable<ClassName> {
         this(type.getClassName());
     }
 
+    public ClassName(Class clazz) {
+        this(clazz.getName());
+    }
+
     public ClassName(String className) {
         _className = className;
     }

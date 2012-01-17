@@ -68,7 +68,7 @@ public class ShowMoveErrors {
             ListMultimap<ClassName, ClassName> moduleBrokenMap = null;
             for (ClassName referencedClass : referencedClasses) {
                 ModuleName referencedModule = locations.getModule(referencedClass);
-                if (referencedModule != null && !modules.isVisibleTo(moduleName, referencedModule)) {
+                if (referencedModule != null && !modules.isDependentOf(moduleName, referencedModule)) {
                     if (moduleBrokenMap == null) {
                         moduleBrokenMap = brokenMap.get(moduleName);
                         if (moduleBrokenMap == null) {

@@ -47,13 +47,11 @@ import java.util.Set;
 public class ClassExtractorTest {
 
     public void runTest() throws IOException {
-//        ClassExtractor extractor = new ClassExtractor();
-        ClassExtractor extractor = new ClassExtractor();
+        ClassExtractor extractor = new ClassExtractor("");
         extractor.visit(new ClassReader(Root.class.getName()));
+        Set<ClassName> actual = extractor.getClassNames();
 
-        Set<String> actual = extractor.getClassNames();
-
-        Set<String> expected = getNames(
+        Set<ClassName> expected = getNames(
                 Object.class,
                 Arrays.class,
                 List.class,
@@ -107,10 +105,10 @@ public class ClassExtractorTest {
         }
     }
 
-    private Set<String> getNames(Class... classes) {
-        Set<String> names = Sets.newHashSet();
+    private Set<ClassName> getNames(Class... classes) {
+        Set<ClassName> names = Sets.newHashSet();
         for (Class clazz : classes) {
-            names.add(clazz.getName());
+            names.add(new ClassName(clazz));
         }
         return names;
     }
@@ -121,10 +119,3 @@ public class ClassExtractorTest {
         return list;
     }
 }
-/*
-com.bazaarvoice.scratch.dependencies.ref.AnnotationLocalVariable,
-com.bazaarvoice.scratch.dependencies.ref.CallStaticFieldType,
-com.bazaarvoice.scratch.dependencies.ref.GenericCallType,
-com.bazaarvoice.scratch.dependencies.ref.GenericLocalVariableType,
-com.bazaarvoice.scratch.dependencies.ref.LocalVariableType
-*/
