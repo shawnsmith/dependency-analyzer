@@ -46,6 +46,10 @@ public class ClassLocations {
         return Collections.unmodifiableSet(_classToModuleMap.keySet());
     }
 
+    public Set<ModuleName>  getAllModules() {
+        return Collections.unmodifiableSet(_moduleToClassMap.keySet());
+    }
+
     public ModuleName getModule(ClassName className) {
         return _classToModuleMap.get(className);
     }

@@ -1,6 +1,7 @@
 package com.bazaarvoice.scratch.dependencies;
 
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -45,6 +46,13 @@ public class Utils {
         return new File(path).getName();
     }
 
+    public static String getRelativePath(File file, File rootDirectory) {
+        String rootPath = rootDirectory.getPath();
+        String filePath = file.getPath();
+        Preconditions.checkArgument(filePath.startsWith(rootPath));
+        return StringUtils.removeStart(filePath.substring(rootPath.length()), File.separator);
+    }
+
     public static List<File> findFiles(File root, FileFilter filter) {
         final List<File> files = Lists.newArrayList();
         walkDirectoryHelper(root, filter, new Function<File, Void>() {
@@ -62,15 +70,14 @@ public class Utils {
         void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException;
     }
 
-    public static void walkDirectory(File root, final FileSink sink) {
+    public static void walkDirectory(final File root, final FileSink sink) {
         try {
-            final String rootName = root.toString();
             if (root.isDirectory()) {
                 // directory of class files
                 walkDirectoryHelper(root, null, new Function<File, Void>() {
                     @Override
                     public Void apply(File file) {
-                        String name = StringUtils.removeStart(file.toString().substring(rootName.length()), File.separator);
+                        String name = getRelativePath(file, root);
                         try {
                             sink.accept(name, Files.newInputStreamSupplier(file));
                             return null;

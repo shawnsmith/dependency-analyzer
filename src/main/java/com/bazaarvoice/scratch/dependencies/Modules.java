@@ -24,9 +24,9 @@ public class Modules {
         return _moduleMap.get(moduleName);
     }
 
-    public void scan(File root, String groupFilter) {
+    public void scan(File rootDirectory, String groupFilter) {
         // scan all the pom.xml files
-        for (File pomFile : Utils.findFiles(root, new NameFileFilter("pom.xml"))) {
+        for (File pomFile : Utils.findFiles(rootDirectory, new NameFileFilter("pom.xml"))) {
             Module module = Module.parseXml(pomFile);
             if (module.getName().isMemberOfGroup(groupFilter)) {
                 _moduleMap.put(module.getName(), module);
