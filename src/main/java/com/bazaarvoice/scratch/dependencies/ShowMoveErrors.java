@@ -27,6 +27,7 @@ public class ShowMoveErrors {
         options.addOption(OptionBuilder.withLongOpt("moves").hasArg().isRequired().withDescription("File listing class moves, organized by Maven artifact").create());
         options.addOption(OptionBuilder.withLongOpt("package").hasArg().withDescription("Restrict analysis to classes under the specified package").create());
         options.addOption(OptionBuilder.withLongOpt("group").hasArg().withDescription("Restrict analysis to Maven modules with the specified group prefix").create());
+        options.addOption(OptionBuilder.withLongOpt("refs").hasArg().withDescription("Extra set of references to take into consideration").create());
         return options;
     }
 
@@ -42,13 +43,15 @@ public class ShowMoveErrors {
         File movesFile = new File(cmd.getOptionValue("moves"));
         Predicate<ClassName> packageFilter = new PackagePredicate(cmd.getOptionValue("package", ""));
         String groupPrefix = cmd.getOptionValue("group", "");
+        File refsFile = cmd.hasOption("refs") ? new File(cmd.getOptionValue("refs")) : null;
 
         // scan all the pom.xml files
         Modules modules = new Modules();
         modules.scan(rootFile, groupPrefix);
 
-        // load the moves file
+        // load the moves and refs files
         ClassLocations moves = ClassLocations.parseFile(movesFile, groupPrefix);
+        ClassLocations refs = (refsFile != null) ? ClassLocations.parseFile(refsFile, groupPrefix) : null;
 
         // scan the compiled classes of all the maven targets
         ClassScanner classScanner = new ClassScanner(packageFilter);
@@ -58,6 +61,15 @@ public class ShowMoveErrors {
 
         // apply the moves file
         locations.moveAll(moves);
+
+        // apply the refs file, if one was specified
+        if (refs != null) {
+            for (ModuleName moduleName : refs.getAllModules()) {
+                ClassName refsName = new ClassName(moduleName + ":" + refsFile);
+                locations.add(refsName, moduleName);
+                dependencies.add(refsName, refs.getClasses(moduleName));
+            }
+        }
 
         // find modules that reference classes they don't have access to
         Map<ModuleName, ListMultimap<ClassName, ClassName>> brokenMap = Maps.newHashMap();

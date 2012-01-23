@@ -64,7 +64,7 @@ public class ClassLocations {
 
     public void add(ClassName className, ModuleName moduleName) {
         ModuleName previous = _classToModuleMap.put(className, moduleName);
-        if (previous != moduleName) {
+        if (!moduleName.equals(previous)) {
             if (previous != null) {
                 System.err.println(" warning, " + className + " is in both " + previous + " and " + moduleName);
                 _moduleToClassMap.remove(moduleName, className);

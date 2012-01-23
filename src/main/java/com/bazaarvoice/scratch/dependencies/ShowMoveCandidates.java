@@ -25,6 +25,7 @@ public class ShowMoveCandidates {
         options.addOption(OptionBuilder.withLongOpt("src").hasArg().isRequired().withDescription("Source module").create());
         options.addOption(OptionBuilder.withLongOpt("dest").hasArg().isRequired().withDescription("Destination module").create());
         options.addOption(OptionBuilder.withLongOpt("moves").hasArg().withDescription("File listing class moves, organized by Maven artifact").create());
+        options.addOption(OptionBuilder.withLongOpt("refs").hasArg().withDescription("Extra set of references to take into consideration").create());
         options.addOption(OptionBuilder.withLongOpt("package").hasArg().withDescription("Restrict analysis to classes under the specified package").create());
         options.addOption(OptionBuilder.withLongOpt("group").hasArg().withDescription("Restrict analysis to Maven modules with the specified group prefix").create());
         return options;
@@ -44,6 +45,7 @@ public class ShowMoveCandidates {
         ModuleName src = ModuleName.parseDescriptor(cmd.getOptionValue("src"), groupPrefix);
         ModuleName dest = ModuleName.parseDescriptor(cmd.getOptionValue("dest"), groupPrefix);
         File movesFile = cmd.hasOption("moves") ? new File(cmd.getOptionValue("moves")) : null;
+        File refsFile = cmd.hasOption("refs") ? new File(cmd.getOptionValue("refs")) : null;
 
         // scan all the pom.xml files
         Modules modules = new Modules();
@@ -56,8 +58,9 @@ public class ShowMoveCandidates {
             throw new IllegalArgumentException("Unknown destination module: " + dest);
         }
 
-        // load the moves file, if one was provided
+        // load the moves and refs files, if provided
         ClassLocations moves = (movesFile != null) ? ClassLocations.parseFile(movesFile, groupPrefix) : null;
+        ClassLocations refs = (refsFile != null) ? ClassLocations.parseFile(refsFile, groupPrefix) : null;
 
         // scan the compiled classes of all the maven targets
         ClassScanner classScanner = new ClassScanner(packageFilter);
@@ -65,9 +68,18 @@ public class ShowMoveCandidates {
         ClassLocations locations = classScanner.getLocations();
         ClassDependencies dependencies = classScanner.getDependencies();
 
-        // apply the moves file
+        // apply the moves file, if one was specified
         if (moves != null) {
             locations.moveAll(moves);
+        }
+
+        // apply the refs file, if one was specified
+        if (refs != null) {
+            for (ModuleName moduleName : refs.getAllModules()) {
+                ClassName refsName = new ClassName(moduleName + ":" + refsFile);
+                locations.add(refsName, moduleName);
+                dependencies.add(refsName, refs.getClasses(moduleName));
+            }
         }
 
         // get the list of modules that depend on src but not on dest.  these may be affected by moves.
