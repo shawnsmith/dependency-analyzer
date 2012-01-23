@@ -30,6 +30,7 @@ import com.bazaarvoice.scratch.dependencies.ref.MethodParameterType;
 import com.bazaarvoice.scratch.dependencies.ref.MethodReturnType;
 import com.bazaarvoice.scratch.dependencies.ref.Root;
 import com.bazaarvoice.scratch.dependencies.ref.SuperType;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.objectweb.asm.ClassReader;
@@ -47,7 +48,7 @@ import java.util.Set;
 public class ClassExtractorTest {
 
     public void runTest() throws IOException {
-        ClassExtractor extractor = new ClassExtractor("");
+        ClassExtractor extractor = new ClassExtractor(Predicates.<ClassName>alwaysTrue());
         extractor.visit(new ClassReader(Root.class.getName()));
         Set<ClassName> actual = extractor.getClassNames();
 

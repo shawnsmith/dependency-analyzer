@@ -1,5 +1,6 @@
 package com.bazaarvoice.scratch.dependencies;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Sets;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -38,7 +39,7 @@ public class ShowMoveCandidates {
             System.exit(1);
         }
         File rootFile = new File(cmd.getOptionValue("root"));
-        String packageFilter = cmd.getOptionValue("package", "");
+        Predicate<ClassName> packageFilter = new PackagePredicate(cmd.getOptionValue("package", ""));
         String groupPrefix = cmd.getOptionValue("group", "");
         ModuleName src = ModuleName.parseDescriptor(cmd.getOptionValue("src"), groupPrefix);
         ModuleName dest = ModuleName.parseDescriptor(cmd.getOptionValue("dest"), groupPrefix);

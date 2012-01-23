@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import org.apache.commons.lang3.StringUtils;
+import org.xml.sax.InputSource;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -112,5 +113,17 @@ public class Utils {
                 }
             }
         }
+    }
+
+    public static InputSource newClassPathInputSource(String resource, String systemId) {
+        Preconditions.checkNotNull(resource);
+        Preconditions.checkNotNull(systemId);
+        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
+        if (in == null) {
+            throw new IllegalArgumentException("Unknown resource for " + systemId + ": " + resource);
+        }
+        InputSource inputSource = new InputSource(in);
+        inputSource.setSystemId(systemId);
+        return inputSource;
     }
 }

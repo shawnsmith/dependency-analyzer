@@ -1,5 +1,6 @@
 package com.bazaarvoice.scratch.dependencies;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Sets;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -20,7 +21,7 @@ import java.util.Set;
  */
 public class ClassExtractor {
 
-    private final String _packageFilter;
+    private final Predicate<ClassName> _packageFilter;
     private final Set<ClassName> _classNames = Sets.newHashSet();
 
     private final ClassVisitor _classVisitor = new CollectorClassVisitor();
@@ -29,7 +30,7 @@ public class ClassExtractor {
     private final AnnotationVisitor _annotationVisitor = new CollectorAnnotationVisitor();
     private final SignatureVisitor _signatureVisitor = new CollectorSignatureVisitor();
 
-    public ClassExtractor(String packageFilter) {
+    public ClassExtractor(Predicate<ClassName> packageFilter) {
         _packageFilter = packageFilter;
     }
 
@@ -46,7 +47,7 @@ public class ClassExtractor {
         switch (type.getSort()) {
             case Type.OBJECT:
                 ClassName className = new ClassName(type).getOuterClassName();
-                if (className.isMemberOfPackage(_packageFilter)) {
+                if (_packageFilter.apply(className)) {
                     _classNames.add(className);
                 }
                 break;

@@ -1,5 +1,6 @@
 package com.bazaarvoice.scratch.dependencies;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Type;
 
@@ -21,6 +22,7 @@ public class ClassName implements Comparable<ClassName> {
     }
 
     public ClassName(String className) {
+        Preconditions.checkNotNull(className);
         _className = className;
     }
 

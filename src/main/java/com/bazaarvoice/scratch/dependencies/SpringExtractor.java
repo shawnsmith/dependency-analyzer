@@ -1,12 +1,13 @@
 package com.bazaarvoice.scratch.dependencies;
 
+import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-public class SpringExtractor extends XmlExtractor {
+public class SpringExtractor extends AbstractXmlExtractor {
 
-    public SpringExtractor(String packageFilter) {
+    public SpringExtractor(Predicate<ClassName> packageFilter) {
         super(packageFilter);
     }
 

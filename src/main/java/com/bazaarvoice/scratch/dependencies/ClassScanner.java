@@ -1,6 +1,8 @@
 package com.bazaarvoice.scratch.dependencies;
 
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import org.objectweb.asm.ClassReader;
@@ -10,18 +12,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
 public class ClassScanner {
 
-    private final String _packageFilter;
+    private final Predicate<ClassName> _packageFilter;
     private final ClassLocations _locations = new ClassLocations();
     private final ClassDependencies _dependencies = new ClassDependencies();
 
-    public ClassScanner(String packageFilter) {
+    public ClassScanner(Predicate<ClassName> packageFilter) {
         _packageFilter = packageFilter;
     }
 
@@ -36,19 +39,22 @@ public class ClassScanner {
     public void scan(Collection<Module> modules) {
         int numThreads = Runtime.getRuntime().availableProcessors() * 2;
         ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
+        List<Future> futures = Lists.newArrayList();
         for (final Module module : modules) {
-            threadPool.submit(new Runnable() {
+            futures.add(threadPool.submit(new Runnable() {
                 @Override
                 public void run() {
                     scan(module);
                 }
-            });
+            }));
         }
         threadPool.shutdown();
-        try {
-            threadPool.awaitTermination(1, TimeUnit.DAYS);
-        } catch (InterruptedException e) {
-            throw Throwables.propagate(e);
+        for (Future future : futures) {
+            try {
+                future.get();
+            } catch (Exception e) {
+                throw Throwables.propagate(e);
+            }
         }
     }
 

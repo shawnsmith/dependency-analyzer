@@ -1,5 +1,6 @@
 package com.bazaarvoice.scratch.dependencies;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
@@ -39,7 +40,7 @@ public class ShowMoveErrors {
         }
         File rootFile = new File(cmd.getOptionValue("root"));
         File movesFile = new File(cmd.getOptionValue("moves"));
-        String packageFilter = cmd.getOptionValue("package", "");
+        Predicate<ClassName> packageFilter = new PackagePredicate(cmd.getOptionValue("package", ""));
         String groupPrefix = cmd.getOptionValue("group", "");
 
         // scan all the pom.xml files
