@@ -2,7 +2,6 @@ package com.bazaarvoice.scratch.dependencies;
 
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
@@ -11,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -56,31 +56,24 @@ public class ClassScanner {
         System.err.println("scanning " + module.getName() + "...");
         Utils.walkDirectory(new File(module.getDirectory(), "target/classes"), new Utils.FileSink() {
             @Override
-            public void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
-                String extension = Files.getFileExtension(fileName);
-                if ("class".equals(extension)) {
+            public void accept(String filePath, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
+                if (filePath.endsWith(".class")) {
                     scanClass(module, inputSupplier);
-                } else if ("xml".equals(extension) && Utils.getFileName(fileName).startsWith("applicationContext")) {
-                    scanSpring(module, fileName, inputSupplier);
+                } else {
+                    scanFile(module, true, filePath, inputSupplier);
                 }
             }
         });
         Utils.walkDirectory(new File(module.getDirectory(), "src/main/resources"), new Utils.FileSink() {
             @Override
-            public void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
-                String extension = Files.getFileExtension(fileName);
-                if ("xml".equals(extension) && Utils.getFileName(fileName).startsWith("applicationContext")) {
-                    scanSpring(module, fileName, inputSupplier);
-                }
+            public void accept(String filePath, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
+                scanFile(module, true, filePath, inputSupplier);
             }
         });
         Utils.walkDirectory(new File(module.getDirectory(), "src/main/webapp/WEB-INF"), new Utils.FileSink() {
             @Override
-            public void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
-                String extension = Files.getFileExtension(fileName);
-                if ("xml".equals(extension) && Utils.getFileName(fileName).startsWith("applicationContext")) {
-                    scanSpring(module, module + ":" + fileName, inputSupplier);
-                }
+            public void accept(String filePath, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
+                scanFile(module, false, filePath, inputSupplier);
             }
         });
     }
@@ -93,10 +86,25 @@ public class ClassScanner {
         addDependencies(className, new ClassExtractor(_packageFilter).visit(reader).getClassNames());
     }
 
-    private void scanSpring(Module module, String fileName, InputSupplier<? extends InputStream> inputSupplier) {
-        ClassName className = new ClassName(fileName);
-        addLocation(className, module);
-        addDependencies(className, new SpringExtractor(_packageFilter).visit(inputSupplier, fileName).getClassNames());
+    private void scanFile(Module module, boolean shared, String filePath, InputSupplier<? extends InputStream> inputSupplier) {
+        Set<ClassName> classes = null;
+        String fileName = Utils.getFileName(filePath);
+
+        if (fileName.startsWith("applicationContext") && fileName.endsWith(".xml")) {
+            classes = new SpringExtractor(_packageFilter).visit(inputSupplier, filePath).getClassNames();
+
+        } else if (fileName.endsWith(".hbm.xml")) {
+            classes = new HibernateExtractor(_packageFilter).visit(inputSupplier, filePath).getClassNames();
+
+        } else if (fileName.endsWith(".page") || fileName.endsWith(".jwc") || fileName.endsWith(".script")) {
+            classes = new TapestryExtractor(_packageFilter).visit(inputSupplier, filePath).getClassNames();
+        }
+
+        if (classes != null) {
+            ClassName className = new ClassName(shared ? filePath : module + ":" + filePath);
+            addLocation(className, module);
+            addDependencies(className, classes);
+        }
     }
 
     private synchronized void addDependencies(ClassName className, Collection<ClassName> referencedClasses) {

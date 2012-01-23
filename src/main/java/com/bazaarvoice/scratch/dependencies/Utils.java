@@ -8,6 +8,7 @@ import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -28,12 +28,6 @@ public class Utils {
     public static <T extends Comparable<? super T>> List<T> sorted(Collection<T> col) {
         List<T> list = Lists.newArrayList(col);
         Collections.sort(list);
-        return list;
-    }
-
-    public static <T> List<T> sorted(Collection<T> col, Comparator<T> comparator) {
-        List<T> list = Lists.newArrayList(col);
-        Collections.sort(list, comparator);
         return list;
     }
 
@@ -67,7 +61,7 @@ public class Utils {
     }
 
     interface FileSink {
-        void accept(String fileName, InputSupplier<? extends InputStream> inputSupplier) throws IOException;
+        void accept(String filePath, InputSupplier<? extends InputStream> inputSupplier) throws IOException;
     }
 
     public static void walkDirectory(final File root, final FileSink sink) {
@@ -103,7 +97,7 @@ public class Utils {
         }
     }
 
-    private static void walkDirectoryHelper(File dir, FileFilter filter, Function<File, Void> sink) {
+    private static void walkDirectoryHelper(File dir, @Nullable FileFilter filter, Function<File, Void> sink) {
         if (!IGNORE_DIRS.contains(dir.getName())) {
             File[] files = dir.listFiles();
             if (files != null) {
