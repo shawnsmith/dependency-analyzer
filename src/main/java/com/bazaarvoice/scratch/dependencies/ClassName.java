@@ -53,7 +53,7 @@ public class ClassName implements Comparable<ClassName> {
 
     public File getLocation(File rootDirectory) {
         // reverse the logic in ClassScanner.java, more or less
-        if (_className.endsWith(".xml")) {
+        if (_className.endsWith(".xml") || _className.indexOf('/') != -1) {
             if (_className.contains(":")) {
                 return findPreferredLocation(rootDirectory, StringUtils.substringAfterLast(_className, ":"), "src/main/webapp/WEB-INF");
             } else {
