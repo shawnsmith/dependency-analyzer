@@ -1,6 +1,5 @@
 package com.bazaarvoice.scratch.dependencies;
 
-import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -15,8 +14,10 @@ public class SpringExtractor extends AbstractXmlExtractor {
 
     private static final Pattern OGNL_CLASS = Pattern.compile("@(.*?)@");
 
-    public SpringExtractor(Predicate<ClassName> packageFilter) {
-        super(packageFilter);
+    private final ClassCollector _classes;
+
+    public SpringExtractor(ClassCollector classes) {
+        _classes = classes;
     }
 
     @Override
@@ -33,7 +34,7 @@ public class SpringExtractor extends AbstractXmlExtractor {
         if ("import".equals(element.getName())) {
             Attribute resource = element.getAttribute("resource");
             if (resource != null && resource.getValue().startsWith("classpath:")) {
-                addFile(StringUtils.removeStart(resource.getValue(), "classpath:"));
+                _classes.addFile(StringUtils.removeStart(resource.getValue(), "classpath:"));
             }
         }
         super.visitElement(element);
@@ -44,11 +45,11 @@ public class SpringExtractor extends AbstractXmlExtractor {
         String name = attribute.getName();
         String value = attribute.getValue();
         if ("class".equals(name)) {
-            addClass(value);
+            _classes.addClass(value);
         } else if ("value".equals(name) && value.indexOf('@') != -1) {
             Matcher matcher = OGNL_CLASS.matcher(value);
             while (matcher.find()) {
-                addClass(matcher.group(1));
+                _classes.addClass(matcher.group(1));
             }
         }
     }

@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -87,29 +86,41 @@ public class ClassScanner {
     private void scanClass(Module module, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
         byte[] classBytes = ByteStreams.toByteArray(inputSupplier);
         ClassReader reader = new ClassReader(classBytes);
+
         ClassName className = new ClassName(Type.getObjectType(reader.getClassName())).getOuterClassName();
         addLocation(className, module);
-        addDependencies(className, new ClassExtractor(_packageFilter).visit(reader).getClassNames());
+
+        ClassCollector classes = new ClassCollector(_packageFilter);
+        new ClassExtractor(classes).visit(reader);
+        addDependencies(className, classes.getClassNames());
     }
 
-    private void scanFile(Module module, boolean shared, String filePath, InputSupplier<? extends InputStream> inputSupplier) {
-        Set<ClassName> classes = null;
+    private void scanFile(Module module, boolean shared, String filePath, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
         String fileName = Utils.getFileName(filePath);
+        ClassCollector classes = new ClassCollector(_packageFilter);
+        boolean scanned = false;
 
         if (fileName.startsWith("applicationContext") && fileName.endsWith(".xml")) {
-            classes = new SpringExtractor(_packageFilter).visit(inputSupplier, filePath).getClassNames();
+            new SpringExtractor(classes).visit(inputSupplier, filePath);
+            scanned = true;
 
         } else if (fileName.endsWith(".hbm.xml")) {
-            classes = new HibernateExtractor(_packageFilter).visit(inputSupplier, filePath).getClassNames();
+            new HibernateExtractor(classes).visit(inputSupplier, filePath);
+            scanned = true;
 
         } else if (fileName.endsWith(".page") || fileName.endsWith(".jwc") || fileName.endsWith(".script")) {
-            classes = new TapestryExtractor(_packageFilter).visit(inputSupplier, filePath).getClassNames();
+            new TapestryExtractor(classes).visit(inputSupplier, filePath);
+            scanned = true;
+
+        } else if ("spring.handlers".equals(fileName)) {
+            new SpringHandlersExtractor(classes).visit(inputSupplier);
+            scanned = true;
         }
 
-        if (classes != null) {
+        if (scanned) {
             ClassName className = new ClassName(shared ? filePath : module + ":" + filePath);
             addLocation(className, module);
-            addDependencies(className, classes);
+            addDependencies(className, classes.getClassNames());
         }
     }
 

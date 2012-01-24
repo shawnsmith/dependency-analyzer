@@ -1,7 +1,5 @@
 package com.bazaarvoice.scratch.dependencies;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Sets;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -14,68 +12,39 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
-import java.util.Set;
-
 /**
  * Extracts references to class names from class file byte code.
  */
 public class ClassExtractor {
 
-    private final Predicate<ClassName> _packageFilter;
-    private final Set<ClassName> _classNames = Sets.newHashSet();
-
+    private final ClassCollector _classes;
     private final ClassVisitor _classVisitor = new CollectorClassVisitor();
     private final FieldVisitor _fieldVisitor = new CollectorFieldVisitor();
     private final MethodVisitor _methodVisitor = new CollectorMethodVisitor();
     private final AnnotationVisitor _annotationVisitor = new CollectorAnnotationVisitor();
     private final SignatureVisitor _signatureVisitor = new CollectorSignatureVisitor();
 
-    public ClassExtractor(Predicate<ClassName> packageFilter) {
-        _packageFilter = packageFilter;
+    public ClassExtractor(ClassCollector classes) {
+        _classes = classes;
     }
 
-    public Set<ClassName> getClassNames() {
-        return _classNames;
-    }
-
-    public ClassExtractor visit(ClassReader reader) {
+    public void visit(ClassReader reader) {
         reader.accept(_classVisitor, ClassReader.SKIP_FRAMES);
-        return this;
-    }
-
-    private void addType(Type type) {
-        switch (type.getSort()) {
-            case Type.OBJECT:
-                ClassName className = new ClassName(type).getOuterClassName();
-                if (_packageFilter.apply(className)) {
-                    _classNames.add(className);
-                }
-                break;
-            case Type.ARRAY:
-                addType(type.getElementType());
-                break;
-            case Type.METHOD:
-                addType(type.getReturnType());
-                for (Type argumentType : type.getArgumentTypes()) {
-                    addType(argumentType);
-                }
-                break;
-        }
     }
 
     /** Adds a string using the JVM internal classname format (4.2.1 Binary Class and Interface Names in the JVM spec) */
     private void addObjectName(String internalName) {
-        addType(Type.getObjectType(internalName));
+        _classes.addType(Type.getObjectType(internalName));
     }
 
     /** Adds a string using the JVM field descriptor format (4.3.2 Field Descriptors in the JVM spec) */
     private void addFieldDescriptor(String descriptor) {
-        addType(Type.getType(descriptor));
+        _classes.addType(Type.getType(descriptor));
     }
 
     /** Adds a string using the JVM method descriptor format (4.3.3 Method Descriptors in the JVM spec) */
     private void addMethodDescriptor(String descriptor) {
-        addType(Type.getMethodType(descriptor));
+        _classes.addType(Type.getMethodType(descriptor));
     }
 
     /** Adds a string using the JVM generic field signature (4.3.4 Signatures in the JVM spec) */
@@ -90,11 +59,6 @@ public class ClassExtractor {
         if (signature != null) {
             new SignatureReader(signature).accept(_signatureVisitor);
         }
-    }
-
-    @Override
-    public String toString() {
-        return Utils.sorted(_classNames).toString();
     }
 
     private class CollectorClassVisitor extends ClassVisitor {

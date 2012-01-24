@@ -1,8 +1,6 @@
 package com.bazaarvoice.scratch.dependencies;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
 import com.google.common.io.InputSupplier;
 import org.jdom.Attribute;
 import org.jdom.Document;
@@ -15,24 +13,11 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Set;
 
 public abstract class AbstractXmlExtractor {
 
-    private final Predicate<ClassName> _packageFilter;
-    private final Set<ClassName> _classNames = Sets.newHashSet();
-
-    protected AbstractXmlExtractor(Predicate<ClassName> packageFilter) {
-        _packageFilter = packageFilter;
-    }
-
-    public Set<ClassName> getClassNames() {
-        return _classNames;
-    }
-
-    public AbstractXmlExtractor visit(InputSupplier<? extends InputStream> inputSupplier, String systemId) {
+    public void visit(InputSupplier<? extends InputStream> inputSupplier, String systemId) {
         visitDocument(parseXmlFile(inputSupplier, systemId));
-        return this;
     }
 
     private Document parseXmlFile(InputSupplier<? extends InputStream> inputSupplier, String systemId) {
@@ -81,16 +66,5 @@ public abstract class AbstractXmlExtractor {
         for (Element child : children) {
             visitElement(child);
         }
-    }
-
-    protected void addClass(String string) {
-        ClassName className = new ClassName(string).getOuterClassName();
-        if (_packageFilter.apply(className)) {
-            _classNames.add(className);
-        }
-    }
-
-    protected void addFile(String string) {
-        _classNames.add(new ClassName(string));
     }
 }

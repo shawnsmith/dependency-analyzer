@@ -48,9 +48,9 @@ import java.util.Set;
 public class ClassExtractorTest {
 
     public void runTest() throws IOException {
-        ClassExtractor extractor = new ClassExtractor(Predicates.<ClassName>alwaysTrue());
-        extractor.visit(new ClassReader(Root.class.getName()));
-        Set<ClassName> actual = extractor.getClassNames();
+        ClassCollector classes = new ClassCollector(Predicates.<ClassName>alwaysTrue());
+        new ClassExtractor(classes).visit(new ClassReader(Root.class.getName()));
+        Set<ClassName> actual = classes.getClassNames();
 
         Set<ClassName> expected = getNames(
                 Object.class,

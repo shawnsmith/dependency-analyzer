@@ -1,6 +1,5 @@
 package com.bazaarvoice.scratch.dependencies;
 
-import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -11,8 +10,10 @@ import java.io.IOException;
 
 public class HibernateExtractor extends AbstractXmlExtractor {
 
-    public HibernateExtractor(Predicate<ClassName> packageFilter) {
-        super(packageFilter);
+    private final ClassCollector _classes;
+
+    public HibernateExtractor(ClassCollector classes) {
+        _classes = classes;
     }
 
     @Override
@@ -27,7 +28,7 @@ public class HibernateExtractor extends AbstractXmlExtractor {
     @Override
     protected void visitElement(Element element) {
         if ("class".equals(element.getName())) {
-            addClass(element.getAttributeValue("name"));
+            _classes.addClass(element.getAttributeValue("name"));
         }
         super.visitElement(element);
     }
@@ -35,7 +36,7 @@ public class HibernateExtractor extends AbstractXmlExtractor {
     @Override
     protected void visitAttribute(Attribute attribute) {
         if ("class".equals(attribute.getName()) || "type".equals(attribute.getName())) {
-            addClass(attribute.getValue());
+            _classes.addClass(attribute.getValue());
         }
     }
 }

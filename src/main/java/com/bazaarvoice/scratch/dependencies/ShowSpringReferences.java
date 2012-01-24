@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.Set;
 
 public class ShowSpringReferences {
 
@@ -67,8 +66,9 @@ public class ShowSpringReferences {
 
     private static void scanFile(ClassLocations references, ModuleName moduleName, String filePath,
                                  InputSupplier<? extends InputStream> inputSupplier, Predicate<ClassName> packageFilter) {
-        Set<ClassName> classes = new SpringExtractor(packageFilter).visit(inputSupplier, filePath).getClassNames();
-        for (ClassName className : classes) {
+        ClassCollector classes = new ClassCollector(packageFilter);
+        new SpringExtractor(classes).visit(inputSupplier, filePath);
+        for (ClassName className : classes.getClassNames()) {
             references.add(className, moduleName);
         }
     }

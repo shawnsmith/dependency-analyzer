@@ -1,6 +1,5 @@
 package com.bazaarvoice.scratch.dependencies;
 
-import com.google.common.base.Predicate;
 import org.jdom.Attribute;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -9,8 +8,10 @@ import java.io.IOException;
 
 public class TapestryExtractor extends AbstractXmlExtractor {
 
-    public TapestryExtractor(Predicate<ClassName> packageFilter) {
-        super(packageFilter);
+    private final ClassCollector _classes;
+
+    public TapestryExtractor(ClassCollector classes) {
+        _classes = classes;
     }
 
     @Override
@@ -26,7 +27,7 @@ public class TapestryExtractor extends AbstractXmlExtractor {
     @Override
     protected void visitAttribute(Attribute attribute) {
         if ("class".equals(attribute.getName()) || "type".equals(attribute.getName())) {
-            addClass(attribute.getValue());
+            _classes.addClass(attribute.getValue());
         }
     }
 }
