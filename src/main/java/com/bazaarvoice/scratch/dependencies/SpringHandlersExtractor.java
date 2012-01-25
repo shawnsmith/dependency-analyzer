@@ -15,6 +15,10 @@ public class SpringHandlersExtractor {
         _classes = classes;
     }
 
+    public static boolean handles(String fileName) {
+        return "spring.handlers".equals(fileName);
+    }
+
     public void visit(InputSupplier<? extends InputStream> inputSupplier) throws IOException {
         Properties props = new Properties();
         InputStream in = inputSupplier.getInput();

@@ -20,6 +20,10 @@ public class SpringExtractor extends AbstractXmlExtractor {
         _classes = classes;
     }
 
+    public static boolean handles(String fileName) {
+        return fileName.startsWith("applicationContext") && fileName.endsWith(".xml");
+    }
+
     @Override
     protected InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
         if (systemId != null && systemId.startsWith("http://www.springframework.org/dtd/")) {

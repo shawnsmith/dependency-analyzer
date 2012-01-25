@@ -100,20 +100,28 @@ public class ClassScanner {
         ClassCollector classes = new ClassCollector(_packageFilter);
         boolean scanned = false;
 
-        if (fileName.startsWith("applicationContext") && fileName.endsWith(".xml")) {
+        if (SpringExtractor.handles(fileName)) {
             new SpringExtractor(classes).visit(inputSupplier, filePath);
             scanned = true;
 
-        } else if (fileName.endsWith(".hbm.xml")) {
+        } else if (SpringHandlersExtractor.handles(fileName)) {
+            new SpringHandlersExtractor(classes).visit(inputSupplier);
+            scanned = true;
+
+        } else if (ServletExtractor.handles(fileName)) {
+            new ServletExtractor(classes).visit(inputSupplier, fileName);
+            scanned = true;
+
+        } else if (HibernateExtractor.handles(fileName)) {
             new HibernateExtractor(classes).visit(inputSupplier, filePath);
             scanned = true;
 
-        } else if (fileName.endsWith(".page") || fileName.endsWith(".jwc") || fileName.endsWith(".script")) {
-            new TapestryExtractor(classes).visit(inputSupplier, filePath);
+        } else if (IBatisExtractor.handles(fileName)) {
+            new IBatisExtractor(classes).visit(inputSupplier, filePath);
             scanned = true;
 
-        } else if ("spring.handlers".equals(fileName)) {
-            new SpringHandlersExtractor(classes).visit(inputSupplier);
+        } else if (TapestryExtractor.handles(fileName)) {
+            new TapestryExtractor(classes).visit(inputSupplier, filePath);
             scanned = true;
         }
 

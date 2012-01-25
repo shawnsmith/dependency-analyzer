@@ -14,6 +14,13 @@ public class TapestryExtractor extends AbstractXmlExtractor {
         _classes = classes;
     }
 
+    public static boolean handles(String fileName) {
+        return fileName.endsWith(".application") ||
+                fileName.endsWith(".page") ||
+                fileName.endsWith(".jwc") ||
+                fileName.endsWith(".script");
+    }
+
     @Override
     protected InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
         if ("http://jakarta.apache.org/tapestry/dtd/Tapestry_3_0.dtd".equals(systemId)) {
@@ -26,7 +33,8 @@ public class TapestryExtractor extends AbstractXmlExtractor {
 
     @Override
     protected void visitAttribute(Attribute attribute) {
-        if ("class".equals(attribute.getName()) || "type".equals(attribute.getName())) {
+        String attributeName = attribute.getName();
+        if ("class".equals(attributeName) || attributeName.endsWith("-class") || "type".equals(attributeName)) {
             _classes.addClass(attribute.getValue());
         }
     }
