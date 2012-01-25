@@ -21,76 +21,6 @@ Right now, all operations are done via local Maven commands:
 
         $ mvn verify
 
-Class Scanner
--------------
-
-The dependency analyzer scans class files and selected support files to detect dependencies
-between files.  Usually these dependencies are of the form "`classA` depends on `classB`".
-
-### Java class files
-
-Scans the following for references to other Java classes:
-*   `target/classes/**/*.class`
-
-This finds *most* runtime dependencies between classes.  Dependencies that are missed include
-the following:
-
-*   Dynamic class loading-related dependencies, eg. `Class.forName()`
-*   Unused imports
-*   References to static final primitive and String values.
-*   Local variable types unless the .class files are compiled with debug information
-*   Annotations on local variables (these are rare)
-*   Some generic type parameters in expressions.
-
-### Spring XML files
-
-Scans the following for references to Java classes and other Spring XML files:
-*   `target/classes/**/applicationContext*.xml`, `spring.handlers`
-*   `src/main/resources/**/applicationContext*.xml`, `spring.handlers`
-*   `src/main/webapp/WEB-INF/**/applicationContext*.xml`, `spring.handlers`
-
-For the most part, Java class references are identified by looking at the `class` attribute on all XML elements.
-
-The "spring.handlers" file is assumed to be a properties files where all key=value pairs
-have Java class name values.
-
-Spring annotations in the Java source files are ignored.
-
-### Hibernate XML files
-
-Scans the following for references to Java classes:
-
-*   `target/classes/**/*.hbm.xml`
-*   `src/main/resources/**/*.hbm.xml`
-*   `src/main/webapp/WEB-INF/**/*.hbm.xml`
-
-Java class references are identified by looking at the `class` and `type` attributes on
-all XML elements and by the `name` attribute on `class` elements.
-
-### IBatis XML files
-
-Scans the following for references to Java classes:
-
-*   `target/classes/**/*.ibatis.xml`
-*   `src/main/resources/**/*.ibatis.xml`
-*   `src/main/webapp/WEB-INF/**/*.ibatis.xml`
-
-Java class references are identified by looking at the `parameterClass` and `resultClass` attributes on
-all XML elements.
-
-### Tapestry page and component files
-
-Scans the following for references to Java classes:
-
-*   `target/classes/**/*.page`, `*.jwc*`, `*.script`
-*   `src/main/resources/**/*.page`, `*.jwc*`, `*.script`
-*   `src/main/webapp/WEB-INF/**/*.page`, `*.jwc*`, `*.script`
-
-For the most part, Java class references are identified by looking at the `class` and `type` attributes on
-all XML elements.
-
-Currently supports only Tapestry 3.x DTDs.
-
 Commands
 --------
 
@@ -213,3 +143,82 @@ For example:
 For simulating moves, this file lists a set of classes and files and their final location after the
 move has finished.  Note that the source of the moves are not specified--they are discovered by
 scanning the files on disk.
+
+Class Scanner
+-------------
+
+The dependency analyzer scans class files and selected support files to detect dependencies
+between files.  Usually these dependencies are of the form "`classA` depends on `classB`".
+
+### Java class files
+
+Scans the following for references to other Java classes:
+*   `target/classes/**/*.class`
+
+This finds *most* runtime dependencies between classes.  Dependencies that are missed include
+the following:
+
+*   Dynamic class loading-related dependencies, eg. `Class.forName()`
+*   Unused imports
+*   References to static final primitive and String values.
+*   Local variable types unless the .class files are compiled with debug information
+*   Annotations on local variables (these are rare)
+*   Some generic type parameters in expressions.
+
+### Spring XML files
+
+Scans the following for references to Java classes and other Spring XML files:
+*   `target/classes/**/applicationContext*.xml`, `spring.handlers`
+*   `src/main/resources/**/applicationContext*.xml`, `spring.handlers`
+*   `src/main/webapp/WEB-INF/**/applicationContext*.xml`, `spring.handlers`
+
+For the most part, Java class references are identified by looking at the `class` attribute on all XML elements.
+
+The "spring.handlers" file is assumed to be a properties files where all key=value pairs
+have Java class name values.
+
+Spring annotations in the Java source files are ignored.
+
+### Servlet web.xml files
+
+Scans the following for references to Java classes and other Spring XML files:
+*   `target/classes/**/web.xml`
+*   `src/main/resources/**/web.xml`
+*   `src/main/webapp/WEB-INF/**/web.xml`
+
+Java class references are identified by looking at the text values of `*-class` XML elements.
+
+### Hibernate XML files
+
+Scans the following for references to Java classes:
+
+*   `target/classes/**/*.hbm.xml`
+*   `src/main/resources/**/*.hbm.xml`
+*   `src/main/webapp/WEB-INF/**/*.hbm.xml`
+
+Java class references are identified by looking at the `class` and `type` attributes on
+all XML elements and by the `name` attribute on `class` elements.
+
+### IBatis XML files
+
+Scans the following for references to Java classes:
+
+*   `target/classes/**/*.ibatis.xml`
+*   `src/main/resources/**/*.ibatis.xml`
+*   `src/main/webapp/WEB-INF/**/*.ibatis.xml`
+
+Java class references are identified by looking at the `parameterClass` and `resultClass` attributes on
+all XML elements.
+
+### Tapestry page and component files
+
+Scans the following for references to Java classes:
+
+*   `target/classes/**/*.page`, `*.jwc*`, `*.script`
+*   `src/main/resources/**/*.page`, `*.jwc*`, `*.script`
+*   `src/main/webapp/WEB-INF/**/*.page`, `*.jwc*`, `*.script`
+
+For the most part, Java class references are identified by looking at the `class` and `type` attributes on
+all XML elements.
+
+Currently supports only Tapestry 3.x DTDs.
