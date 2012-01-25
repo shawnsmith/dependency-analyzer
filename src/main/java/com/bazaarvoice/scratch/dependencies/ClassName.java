@@ -56,6 +56,11 @@ public class ClassName implements Comparable<ClassName> {
         if (_className.endsWith(".xml") || _className.indexOf('/') != -1) {
             if (_className.contains(":")) {
                 return findPreferredLocation(rootDirectory, StringUtils.substringAfterLast(_className, ":"), "src/main/webapp/WEB-INF");
+            } if (_className.endsWith(".hbm.xml") ||
+                    _className.endsWith(".ibatis.xml") ||
+                    _className.endsWith(".page") || _className.endsWith(".jwc") || _className.endsWith(".script")) {
+                // it's easier to maintain these files if they live right next to their associated Java source files
+                return findPreferredLocation(rootDirectory, _className, "src/main/java", "src/main/resources");
             } else {
                 return findPreferredLocation(rootDirectory, _className, "src/main/resources", "src/main/java");
             }

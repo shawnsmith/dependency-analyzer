@@ -21,7 +21,9 @@ public class SpringExtractor extends AbstractXmlExtractor {
     }
 
     public static boolean handles(String fileName) {
-        return fileName.startsWith("applicationContext") && fileName.endsWith(".xml");
+        return fileName.endsWith(".xml") &&
+                (fileName.startsWith("applicationContext") ||
+                        fileName.endsWith("-servlet.xml"));
     }
 
     @Override

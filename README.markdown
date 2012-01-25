@@ -168,9 +168,9 @@ the following:
 ### Spring XML files
 
 Scans the following for references to Java classes and other Spring XML files:
-*   `target/classes/**/applicationContext*.xml`, `spring.handlers`
-*   `src/main/resources/**/applicationContext*.xml`, `spring.handlers`
-*   `src/main/webapp/WEB-INF/**/applicationContext*.xml`, `spring.handlers`
+*   `target/classes/**/applicationContext*.xml`, `*-servlet.xml`, `spring.handlers`
+*   `src/main/resources/**/applicationContext*.xml`, `*-servlet.xml`, `spring.handlers`
+*   `src/main/webapp/WEB-INF/**/applicationContext*.xml`, `*-servlet.xml`, `spring.handlers`
 
 For the most part, Java class references are identified by looking at the `class` attribute on all XML elements.
 
