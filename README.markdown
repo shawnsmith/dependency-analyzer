@@ -56,8 +56,8 @@ Example:
 
 ### ShowMoveErrors
 
-Show a list of classes that will depend on classes that aren't available to it in a Maven module dependency,
-taking into consideration a "moves file" with a list of classes to move and their destinations.
+Show a classes that likely won't compile or will have class dependency errors once a set of proposed moves
+take place.  The proposed moves are described in a "moves file" (see below).
 
 Usage:
 
