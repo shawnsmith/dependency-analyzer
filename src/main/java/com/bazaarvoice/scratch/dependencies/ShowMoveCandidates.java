@@ -36,7 +36,7 @@ public class ShowMoveCandidates {
         CommandLineParser parser = new GnuParser();
         CommandLine cmd = parser.parse(options, args);
         if (cmd.hasOption("?")) {
-            new HelpFormatter().printHelp("java " + ShowMoves.class.getName(), options);
+            new HelpFormatter().printHelp("java " + ShowMoveCandidates.class.getName(), options);
             System.exit(1);
         }
         File rootFile = new File(cmd.getOptionValue("root"));

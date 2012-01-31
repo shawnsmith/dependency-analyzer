@@ -23,7 +23,7 @@ public class SpringExtractor extends AbstractXmlExtractor {
     public static boolean handles(String fileName) {
         return fileName.endsWith(".xml") &&
                 (fileName.startsWith("applicationContext") ||
-                        fileName.endsWith("-servlet.xml"));
+                        fileName.contains("-servlet"));  // eg. spring-servlet.xml, spring-servlet-common.xml
     }
 
     @Override

@@ -16,7 +16,8 @@ public class IBatisExtractor extends AbstractXmlExtractor {
     }
 
     public static boolean handles(String fileName) {
-        return fileName.endsWith(".ibatis.xml");
+        return fileName.endsWith(".ibatis.xml") ||
+                fileName.startsWith("sqlmap-config") && fileName.endsWith(".xml");
     }
 
     @Override
@@ -33,6 +34,8 @@ public class IBatisExtractor extends AbstractXmlExtractor {
         String attributeName = attribute.getName();
         if ("parameterClass".equals(attributeName) || "resultClass".equals(attributeName)) {
             _classes.addClass(attribute.getValue());
+        } else if ("resource".equals(attributeName)) {
+            _classes.addFile(attribute.getValue());  // usually refers to ibatis.xml files
         }
     }
 }

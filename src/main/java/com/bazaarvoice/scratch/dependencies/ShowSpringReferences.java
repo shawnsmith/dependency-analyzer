@@ -35,7 +35,7 @@ public class ShowSpringReferences {
         CommandLineParser parser = new GnuParser();
         CommandLine cmd = parser.parse(options, args);
         if (cmd.hasOption("?")) {
-            new HelpFormatter().printHelp("java " + ShowMoveErrors.class.getName(), options);
+            new HelpFormatter().printHelp("java " + ShowSpringReferences.class.getName(), options);
             System.exit(1);
         }
         String groupPrefix = cmd.getOptionValue("group", "");

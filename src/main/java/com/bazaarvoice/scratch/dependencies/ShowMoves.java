@@ -27,6 +27,7 @@ public class ShowMoves {
         options.addOption(OptionBuilder.withLongOpt("package").hasArg().withDescription("Restrict analysis to classes under the specified package").create());
         options.addOption(OptionBuilder.withLongOpt("group").hasArg().withDescription("Restrict analysis to Maven modules with the specified group prefix").create());
         options.addOption(OptionBuilder.withLongOpt("svn").withDescription("Display the moves as a set of \"svn mv\" commands").create());
+        options.addOption(OptionBuilder.withLongOpt("bash").withDescription("Display the moves as a set of bash \"mv\" commands").create());
         return options;
     }
 
@@ -42,6 +43,13 @@ public class ShowMoves {
         File movesFile = new File(cmd.getOptionValue("moves"));
         Predicate<ClassName> packageFilter = new PackagePredicate(cmd.getOptionValue("package", ""));
         String groupPrefix = cmd.getOptionValue("group", "");
+        boolean svn = cmd.hasOption("svn");
+        boolean bash = cmd.hasOption("bash");
+        if (cmd.hasOption("?")) {
+            System.err.println("Error: -svn and -bash arguments are mutually exclusive.");
+            new HelpFormatter().printHelp("java " + ShowMoves.class.getName(), options);
+            System.exit(1);
+        }
 
         // scan all the pom.xml files
         Modules modules = new Modules();
@@ -72,8 +80,8 @@ public class ShowMoves {
 
         // write out the moves
         PrintWriter out = new PrintWriter(System.out);
-        if (cmd.hasOption("svn")) {
-            // as a set of "svn mv" operations
+        if (svn || bash) {
+            // as a set of "svn mv" or bash "mv" operations
             Set<File> createdDirs = Sets.newHashSet();
             for (ModuleName moduleName : Utils.sorted(effectiveMoves.getAllModules())) {
                 Module module = modules.getModule(moduleName);
@@ -81,7 +89,7 @@ public class ShowMoves {
                     for (ClassName className : Utils.sorted(effectiveMoves.getClasses(moduleName))) {
                         Module previousModule = modules.getModule(locations.getModule(className));
                         if (previousModule != null) {
-                            printMove(out, className, previousModule, module, rootDirectory, createdDirs);
+                            printMove(out, className, previousModule, module, rootDirectory, createdDirs, svn);
                         }
                     }
                 }
@@ -94,15 +102,17 @@ public class ShowMoves {
         out.flush();
     }
 
-    private static void printMove(PrintWriter out, ClassName className, Module src, Module dest, File root, Set<File> createdDirs) {
+    private static void printMove(PrintWriter out, ClassName className, Module src, Module dest, File root, Set<File> createdDirs, boolean svn) {
+        String prefix = svn ? "svn " : "";
+        String parentsOpt = svn ? "--parents" : "-p";
         File srcFile = className.getLocation(src.getDirectory());
         File destFile = className.getLocation(dest.getDirectory());
         File destDirectory = destFile.getParentFile();
         String srcFilePath = Utils.getRelativePath(srcFile, root);
         String destDirectoryPath = Utils.getRelativePath(destDirectory, root);
         if (createdDirs.add(destDirectory)) {
-            out.println("[ -d " + destDirectoryPath + " ] || svn mkdir --parents " + destDirectoryPath);
+            out.println("[ -d " + destDirectoryPath + " ] || " + prefix + "mkdir " + parentsOpt + " " + destDirectoryPath);
         }
-        out.println("svn mv " + srcFilePath + " " + destDirectoryPath + "/");
+        out.println(prefix + "mv " + srcFilePath + " " + destDirectoryPath + "/");
     }
 }
